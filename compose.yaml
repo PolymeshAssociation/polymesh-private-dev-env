@@ -26,7 +26,7 @@ services:
         mode: 0555
 
   sq-node:
-    image: polymeshassociation/polymesh-subquery:v12.2.0
+    image: ${PP_SUBQUERY_IMAGE}
     depends_on:
       sq-postgres:
         condition: service_healthy
@@ -54,7 +54,7 @@ services:
       start_period: 30s
   
   sq-graphql:
-    image: onfinality/subql-query:v2.9.0
+    image: ${PP_SUBQUERY_GRAPHQL_IMAGE}
     depends_on:
       sq-node:
         condition: service_healthy
@@ -63,7 +63,8 @@ services:
     networks:
       - polymesh-private
     ports:
-      - "3000:3000"
+      - ${PP_SUBQUERY_GRAPHQL_PORT:-3000}:3000
+    restart: on-failure
     environment:
       DB_DATABASE: postgres
       DB_HOST: sq-postgres
@@ -79,17 +80,17 @@ services:
       test: ["CMD", "curl", "--fail", "sq-graphql:3000/.well-known/apollo/server-health"]
       interval: 10s
       timeout: 5s
-      retries: 10
+      retries: 2
       start_period: 30s
 
   polymesh-private:
-    image: polymeshassociation/polymesh-private:latest-deployment-pipeline-debian
+    image: ${PP_CHAIN_IMAGE}
     networks:
       - polymesh-private
     ports:
-      - "9944:9944"
-      - "9933:9933"
-      - "30333:30333"
+      - ${PP_CHAIN_WS_PORT:-9944}:9944
+      - ${PP_CHAIN_RPC_PORT:-9933}:9933
+      - ${PP_CHAIN_P2P_PORT:-30333}:30333
     volumes:
       - pp-chain-data:/var/lib/polymesh-private
     command:
@@ -108,39 +109,50 @@ services:
       start_period: 30s
 
   polymesh-rest-api:
-    image: "polymeshassociation/polymesh-rest-api:v5.0.0-alpha.9"
+    image: ${PP_REST_API_IMAGE}
     depends_on:
       polymesh-private:
         condition: service_healthy
       sq-graphql:
         condition: service_healthy
+      vault-init:
+        condition: service_completed_successfully
     networks:
       - polymesh-private
     ports:
-      - "3001:3000"
-    restart: always
+      - ${PP_REST_API_PORT:-3001}:3000
+    restart: on-failure
     volumes:
       - pp-vault-root-token:/vault-token:ro
+    entrypoint: /usr/local/bin/polymesh-rest-api-entrypoint.sh
+    #entrypoint: /bin/sh -c "sleep 1000"
     environment:
       PORT: 3000
       POLYMESH_NODE_URL: "ws://polymesh-private:9944"
       POLYMESH_MIDDLEWARE_V2_URL: "http://sq-graphql:3000"
       AUTH_STRATEGY: "open"
       DEVELOPER_UTILS: true
+      VAULT_URL: "http://vault:8200/v1/transit"
+    configs:
+      - source: polymesh-rest-api-entrypoint
+        target: /usr/local/bin/polymesh-rest-api-entrypoint.sh
+        mode: 0555
     
 
   polymesh-proof-api:
-    image: polymeshassociation/polymesh-proof-api:latest-main-debian
+    image: ${PP_PROOF_API_IMAGE}
     networks:
       - polymesh-private
     ports:
-      - "8080:8080"
+      - ${PP_PROOF_API_PORT:-8080}:8080
     restart: always
     environment:
       DATABASE_URL: sqlite:/data/confidential_assets.db
 
   vault:
     image: hashicorp/vault:${VAULT_VERSION:-latest}
+    networks:
+      - polymesh-private
     restart: unless-stopped
     ports:
       - ${VAULT_PORT:-8200}:8200
@@ -158,13 +170,20 @@ services:
   # This will make sure vault is initialized and unsealed on the first run and unsealed on subsequent runs
   vault-init:
     image: hashicorp/vault:${VAULT_VERSION:-latest}
+    networks:
+      - polymesh-private
     restart: no
+    depends_on:
+      vault:
+        condition: service_started
     volumes:
       - pp-vault-root-token:/vault-token:rw
     # This will prevent the container from creating additional volumes
     tmpfs:
       - /vault/file
       - /vault/logs
+    environment:
+      VAULT_ADDR: "http://vault:8200"
     configs:
       - source: vault-init
         target: /opt/vault/init.sh
@@ -185,6 +204,12 @@ configs:
       #!/bin/bash
       set -exu -o pipefail
       timeout 1 bash -c 'cat < /dev/null > /dev/tcp/127.0.0.1/30333' || exit 2
+  polymesh-rest-api-entrypoint:
+    external: false
+    content: |
+      #!/bin/sh
+      export VAULT_TOKEN=$(cat /vault-token/token)
+      node dist/main.js
   vault-config:
     external: false
     file: ./scripts/vault-config.json

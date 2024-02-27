@@ -14,7 +14,7 @@ Once an `.env` file is present use `docker compose up -d` to bring up the servic
 
 This will bring up:
 
-- Single node Polymesh Private chain
+- Single node Polymesh Private chain in a dev mode
 - Polymesh REST API
 - Polymesh Proof API
 - Hashicorp Vault as a signing manager for the Polymesh Rest API
@@ -49,15 +49,6 @@ In case you want to start from scratch, you need to stop the containers and remo
 
 ```sh
 docker compose down
-docker ps
-```
-
-Make sure to analyze output of the last command, remove containers which are no longer needed, without this step, you won't be able to remove some of the volumes.
-
-```sh
-# Repeat the next step for each container what wasn't removed by the docker compose down command
-docker rm --volumes --force <container_id>
-# This will remove the named volumes created by the docker compose
 docker volume ls --filter label=network.polymesh.project=polymesh-private --quiet | xargs --max-args=1 --no-run-if-empty docker volume rm --force
 ```
 
