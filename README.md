@@ -34,7 +34,7 @@ The docker compose file uses named volumes to persist state where applicable. Th
 
 Thanks to that, the whole environment will store its state during restarts.
 
-sh```
+```sh
 $ docker volume ls
 DRIVER    VOLUME NAME
 local     docker_pp-chain-data
@@ -45,10 +45,20 @@ local     docker_pp-vault-root-token
 local     docker_pp-vault-volume
 ```
 
-In case you want to start from scratch, you need to stop the containers and remove volumes
+In case you want to start from scratch, you need to stop the containers and remove these volumes. Be careful as this will remove all conatiners and anonymous volumes associated with them. Make sure you know
 
-sh```
+```sh
 docker compose down
+docker ps
+```
 
+Make sure to analyze output of the last command, remove containers which are no longer needed, without this step, you won't be able to remove some of the volumes.
+
+```sh
+# Repeat the next step for each container what wasn't removed by the docker compose down command
+docker rm --volumes --force <container_id>
+# This will remove the named volumes created by the docker compose
+docker volume ls --filter label=network.polymesh.project=polymesh-private --quiet | xargs --max-args=1 --no-run-if-empty docker volume rm --force
+```
 
 ## Additional Notes
