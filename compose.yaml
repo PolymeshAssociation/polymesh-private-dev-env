@@ -141,8 +141,6 @@ services:
 
   vault:
     image: hashicorp/vault:${VAULT_VERSION:-latest}
-    profiles:
-      - vault
     restart: unless-stopped
     ports:
       - ${VAULT_PORT:-8200}:8200
@@ -160,8 +158,6 @@ services:
   # This will make sure vault is initialized and unsealed on the first run and unsealed on subsequent runs
   vault-init:
     image: hashicorp/vault:${VAULT_VERSION:-latest}
-    profiles:
-      - vault
     restart: no
     volumes:
       - pp-vault-root-token:/vault-token:rw
