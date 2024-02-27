@@ -1,0 +1,204 @@
+version: '3.8'
+
+networks:
+  polymesh-private:
+
+services:
+  sq-postgres:
+    image: postgres:16.1-alpine
+    networks:
+      - polymesh-private
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    configs:
+      - source: psql_extensions
+        target: /docker-entrypoint-initdb.d/btree_extension.sql
+        mode: 0555
+
+  sq-node:
+    image: polymeshassociation/polymesh-subquery:v12.2.0
+    depends_on:
+      sq-postgres:
+        condition: service_healthy
+      polymesh-private:
+        condition: service_healthy
+    networks:
+      - polymesh-private
+    restart: always
+    environment:
+      DB_USER: postgres
+      DB_PASS: postgres
+      DB_DATABASE: postgres
+      DB_HOST: sq-postgres
+      DB_PORT: 5432
+      START_BLOCK: 1
+      NETWORK_ENDPOINT: "ws://polymesh-private:9944"
+      NETWORK_HTTP_ENDPOINT: "http://polymesh-private:9933"
+    command:
+      - -f=/app
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://sq-node:3000/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+  
+  sq-graphql:
+    image: onfinality/subql-query:v2.9.0
+    depends_on:
+      sq-node:
+        condition: service_healthy
+      sq-postgres:
+        condition: service_healthy
+    networks:
+      - polymesh-private
+    ports:
+      - "3000:3000"
+    environment:
+      DB_DATABASE: postgres
+      DB_HOST: sq-postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASS: postgres
+      PORT: 3000
+      SUBQL_QUERY_INDEXER: http://sq-node:3000
+      SUBQL_QUERY_NAME: public
+      SUBQL_QUERY_OUTPUT_FMT: json
+      SUBQL_QUERY_PLAYGROUND: true
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "sq-graphql:3000/.well-known/apollo/server-health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  polymesh-private:
+    image: polymeshassociation/polymesh-private:latest-deployment-pipeline-debian
+    networks:
+      - polymesh-private
+    ports:
+      - "9944:9944"
+      - "9933:9933"
+      - "30333:30333"
+    volumes:
+      - pp-data:/var/lib/polymesh-private
+    command:
+      - --dev
+      - --rpc-external
+      - --ws-external
+    configs:
+      - source: polymesh-healthcheck-libp2p
+        target: /usr/local/bin/polymesh-healthcheck-libp2p.sh
+        mode: 0555
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/polymesh-healthcheck-libp2p.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  polymesh-rest-api:
+    image: "polymeshassociation/polymesh-rest-api:v5.0.0-alpha.9"
+    depends_on:
+      polymesh-private:
+        condition: service_healthy
+      sq-graphql:
+        condition: service_healthy
+    networks:
+      - polymesh-private
+    ports:
+      - "3001:3000"
+    restart: always
+    volumes:
+      - vault-root-token:/vault-token:ro
+    environment:
+      PORT: 3000
+      POLYMESH_NODE_URL: "ws://polymesh-private:9944"
+      POLYMESH_MIDDLEWARE_V2_URL: "http://sq-graphql:3000"
+      AUTH_STRATEGY: "open"
+      DEVELOPER_UTILS: true
+    
+
+  polymesh-proof-api:
+    image: polymeshassociation/polymesh-proof-api:latest-main-debian
+    networks:
+      - polymesh-private
+    ports:
+      - "8080:8080"
+    restart: always
+    environment:
+      DATABASE_URL: sqlite:/data/confidential_assets.db
+
+  vault:
+    image: hashicorp/vault:${VAULT_VERSION:-latest}
+    profiles:
+      - vault
+    restart: unless-stopped
+    ports:
+      - ${VAULT_PORT:-8200}:8200
+    volumes:
+      - vault-volume:/vault/file:rw
+      - ./vault:/vault/config:rw
+    cap_add:
+      - IPC_LOCK # Prevents secrets from swapping to disk
+    configs:
+      - source: vault-config
+        target: /vault/config/vault.json
+        mode: 0444
+    entrypoint: vault server -config=/vault/config/vault.json
+
+  # This will make sure vault is initialized and unsealed on the first run and unsealed on subsequent runs
+  vault-init:
+    image: hashicorp/vault:${VAULT_VERSION:-latest}
+    profiles:
+      - vault
+    restart: no
+    volumes:
+      - vault-init-volume:/opt/vault:rw
+      - vault-root-token:/vault-token:rw
+    configs:
+      - source: vault-init
+        target: /opt/vault/init.sh
+        mode: 0555
+      - source: vault-init-dependencies
+        target: /opt/vault/init-dependencies.sh
+        mode: 0555
+    entrypoint: /opt/vault/init-dependencies.sh
+
+configs:
+  psql_extensions:
+    external: false
+    content: |
+      CREATE EXTENSION IF NOT EXISTS btree_gist;
+  polymesh-healthcheck-libp2p:
+    external: false
+    content: |
+      #!/bin/bash
+      set -exu -o pipefail
+      timeout 1 bash -c 'cat < /dev/null > /dev/tcp/127.0.0.1/30333' || exit 2
+  vault-config:
+    external: false
+    file: ./scripts/vault-config.json
+  vault-init:
+    external: false
+    file: ./scripts/vault-init.sh
+  vault-init-dependencies:
+    external: false
+    file: ./scripts/vault-init-dependencies.sh
+
+volumes:
+  db-data: {}
+  pp-data: {}
+  vault-volume: {}
+  vault-init-volume: {}
+  vault-root-token: {}
