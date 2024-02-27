@@ -9,7 +9,7 @@ services:
     networks:
       - polymesh-private
     volumes:
-      - db-data:/var/lib/postgresql/data
+      - pp-psql-data:/var/lib/postgresql/data
     environment:
       POSTGRES_PASSWORD: postgres
       POSTGRES_USER: postgres
@@ -91,7 +91,7 @@ services:
       - "9933:9933"
       - "30333:30333"
     volumes:
-      - pp-data:/var/lib/polymesh-private
+      - pp-chain-data:/var/lib/polymesh-private
     command:
       - --dev
       - --rpc-external
@@ -120,7 +120,7 @@ services:
       - "3001:3000"
     restart: always
     volumes:
-      - vault-root-token:/vault-token:ro
+      - pp-vault-root-token:/vault-token:ro
     environment:
       PORT: 3000
       POLYMESH_NODE_URL: "ws://polymesh-private:9944"
@@ -147,8 +147,8 @@ services:
     ports:
       - ${VAULT_PORT:-8200}:8200
     volumes:
-      - vault-volume:/vault/file:rw
-      - ./vault:/vault/config:rw
+      - pp-vault-volume:/vault/file:rw
+      - pp-vault-log-volume:/vault/logs:rw
     cap_add:
       - IPC_LOCK # Prevents secrets from swapping to disk
     configs:
@@ -164,8 +164,11 @@ services:
       - vault
     restart: no
     volumes:
-      - vault-init-volume:/opt/vault:rw
-      - vault-root-token:/vault-token:rw
+      - pp-vault-root-token:/vault-token:rw
+    # This will prevent the container from creating additional volumes
+    tmpfs:
+      - /vault/file
+      - /vault/logs
     configs:
       - source: vault-init
         target: /opt/vault/init.sh
@@ -197,8 +200,23 @@ configs:
     file: ./scripts/vault-init-dependencies.sh
 
 volumes:
-  db-data: {}
-  pp-data: {}
-  vault-volume: {}
-  vault-init-volume: {}
-  vault-root-token: {}
+  pp-psql-data:
+    labels:
+      - "network.polymesh.project=polymesh-private"
+      - "network.polymesh.description=Indexer PostgreSQL data"
+  pp-chain-data: 
+    labels:
+      - "network.polymesh.project=polymesh-private"
+      - "network.polymesh.description=Polymesh chain data"
+  pp-vault-volume: 
+    labels:
+      - "network.polymesh.project=polymesh-private"
+      - "network.polymesh.description=Hashicorp Vault data"
+  pp-vault-log-volume: 
+    labels:
+      - "network.polymesh.project=polymesh-private"
+      - "network.polymesh.description=Hashicorp Vault logs"
+  pp-vault-root-token: 
+    labels:
+      - "network.polymesh.project=polymesh-private"
+      - "network.polymesh.description=Hashicorp Vault root token"
