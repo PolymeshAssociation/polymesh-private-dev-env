@@ -45,7 +45,7 @@ local     docker_pp-vault-root-token
 local     docker_pp-vault-volume
 ```
 
-In case you want to start from scratch, you need to stop the containers and remove these volumes. Be careful as this will remove all conatiners and anonymous volumes associated with them. Make sure you know
+In case you want to start from scratch, you need to stop the containers and remove these volumes.
 
 ```sh
 docker compose down
