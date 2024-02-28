@@ -97,6 +97,7 @@ services:
       - --dev
       - --rpc-external
       - --ws-external
+      - --base-path=/var/lib/polymesh-private
     configs:
       - source: polymesh-healthcheck-libp2p
         target: /usr/local/bin/polymesh-healthcheck-libp2p.sh
