@@ -48,10 +48,10 @@ services:
       - -f=/app
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://sq-node:3000/ready"]
-      interval: 10s
+      interval: 20s
       timeout: 5s
-      retries: 10
-      start_period: 30s
+      retries: 20
+      start_period: 80s
   
   sq-graphql:
     image: ${PP_SUBQUERY_GRAPHQL_IMAGE}

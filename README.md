@@ -24,7 +24,13 @@ This will bring up:
 
 This set of services should allow for testing most integrations.
 
-Bear in mind, it will take a couple of minutes during the first run to setup everything. In general, once the polymesh-rest-api-init container exits, you should be good to go.
+Bear in mind, it will take a couple of minutes during the first run to setup everything. In general, once the polymesh-rest-api-init container exits (it will print a message that the setup is completed), you should be good to go.
+
+Following signers with keys stored in Vault are created that can be used to sign transactions. They have proper CDD claim and some POLYX.
+
+- sender-1
+- receiver-1
+- mediator-1
 
 ## Statefullnes
 
@@ -62,3 +68,10 @@ docker compose logs vault-init
 ```
 
 It should be printed in the last line.
+
+List of web interfaces exposed to localhost with default ports:
+
+http://localhost:3000 <-- Subquery GraphQL
+http://localhost:3001 <-- Polymesh Rest API
+http://localhost:8080/swagger-ui/ <-- Polymesh Proof API
+http://localhost:8020 <-- Hashicorp Vault, signing manager
