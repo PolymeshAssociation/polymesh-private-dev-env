@@ -71,10 +71,10 @@ It should be printed in the last line.
 
 ## List of web interfaces exposed to localhost with their default ports:
 
-http://localhost:3000 <-- Subquery GraphQL
-http://localhost:3001 <-- Polymesh Rest API
-http://localhost:8080/swagger-ui/ <-- Polymesh Proof API
-http://localhost:8020 <-- Hashicorp Vault, signing manager
+- http://localhost:3000 <-- Subquery GraphQL
+- http://localhost:3001 <-- Polymesh Rest API
+- http://localhost:8080/swagger-ui/ <-- Polymesh Proof API
+- http://localhost:8020 <-- Hashicorp Vault, signing manager
 
 ## List of remaining services exposed to localhost with their default ports:
 
