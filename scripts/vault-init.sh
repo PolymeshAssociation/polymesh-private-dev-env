@@ -35,6 +35,13 @@ check_transit_engine() {
 
     if echo $(vault secrets list -format=json) | jq -e 'paths | join("/") | test("transit/") | not' > /dev/null; then
         vault secrets enable -path=transit transit
+        # This will add an admin user who can be granted CDD authority 
+        vault write transit/keys/ppadmin type=ed25519
+
+        # These users will be used in the examples to demonstrate the use of polymesh private transactions
+        vault write transit/keys/sender type=ed25519
+        vault write transit/keys/receiver type=ed25519
+        vault write transit/keys/mediator type=ed25519
     else
         echo "Transit engine already enabled"
     fi

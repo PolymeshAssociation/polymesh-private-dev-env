@@ -34,7 +34,7 @@ services:
         condition: service_healthy
     networks:
       - polymesh-private
-    restart: always
+    restart: on-failure
     environment:
       DB_USER: postgres
       DB_PASS: postgres
@@ -80,7 +80,7 @@ services:
       test: ["CMD", "curl", "--fail", "sq-graphql:3000/.well-known/apollo/server-health"]
       interval: 10s
       timeout: 5s
-      retries: 2
+      retries: 10
       start_period: 30s
 
   polymesh-private:
@@ -106,7 +106,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
-      start_period: 30s
+      start_period: 60s
 
   polymesh-rest-api:
     image: ${PP_REST_API_IMAGE}
@@ -124,8 +124,7 @@ services:
     restart: on-failure
     volumes:
       - pp-vault-root-token:/vault-token:ro
-    entrypoint: /usr/local/bin/polymesh-rest-api-entrypoint.sh
-    #entrypoint: /bin/sh -c "sleep 1000"
+    entrypoint: /bin/sh -c "VAULT_TOKEN=$(cat /vault-token/token) node dist/main.js"
     environment:
       PORT: 3000
       POLYMESH_NODE_URL: "ws://polymesh-private:9944"
@@ -133,9 +132,26 @@ services:
       AUTH_STRATEGY: "open"
       DEVELOPER_UTILS: true
       VAULT_URL: "http://vault:8200/v1/transit"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://polymesh-rest-api:3000/network/latest-block"]
+      interval: 30s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  polymesh-rest-api-init:
+    image: alpine:3.19
+    depends_on:
+      polymesh-rest-api:
+        condition: service_healthy
+    entrypoint: /opt/polymesh-rest-api/init.sh
+    networks:
+      - polymesh-private
+    volumes:
+      - pp-rest-api-signer-init:/opt/polymesh-rest-api/status
     configs:
-      - source: polymesh-rest-api-entrypoint
-        target: /usr/local/bin/polymesh-rest-api-entrypoint.sh
+      - source: rest-api-signer-init
+        target: /opt/polymesh-rest-api/init.sh
         mode: 0555
     
 
@@ -204,12 +220,6 @@ configs:
       #!/bin/bash
       set -exu -o pipefail
       timeout 1 bash -c 'cat < /dev/null > /dev/tcp/127.0.0.1/30333' || exit 2
-  polymesh-rest-api-entrypoint:
-    external: false
-    content: |
-      #!/bin/sh
-      export VAULT_TOKEN=$(cat /vault-token/token)
-      node dist/main.js
   vault-config:
     external: false
     file: ./scripts/vault-config.json
@@ -219,6 +229,9 @@ configs:
   vault-init-dependencies:
     external: false
     file: ./scripts/vault-init-dependencies.sh
+  rest-api-signer-init:
+    external: false
+    file: ./scripts/rest-api-signer-init.sh
 
 volumes:
   pp-psql-data:
@@ -241,3 +254,7 @@ volumes:
     labels:
       - "network.polymesh.project=polymesh-private"
       - "network.polymesh.description=Hashicorp Vault root token"
+  pp-rest-api-signer-init: 
+    labels:
+      - "network.polymesh.project=polymesh-private"
+      - "network.polymesh.description=REST API signer init"

@@ -8,9 +8,9 @@ The docker daemon needs to be running before compose will work. (Try `docker ps`
 
 ## Running
 
-Copy the correct env over to a `.env` from `envs/` e.g. `cp envs/1.0 .env`. This file specifies the images that will be used. Alternatively a file patch can be given explicitly to docker compose, e.g. `docker compose --env-file=envs/1.0 up`
+Copy the correct env over to a `.env` from `envs/`, you may need to overwrite the existing symlink. This file specifies the images that will be used. Alternatively a file patch can be given explicitly to docker compose, e.g. `docker compose --env-file=envs/1.0 up`. A default .env file is present.
 
-Once an `.env` file is present use `docker compose up -d` to bring up the services. `docker compose down` will stop them.
+Use `docker compose up -d` to bring up the services. `docker compose down` will stop them.
 
 This will bring up:
 
@@ -22,7 +22,9 @@ This will bring up:
 - Subquery graphql server
 - Postgres (subquery dependency)
 
-This set of services should allow for testing most integrations
+This set of services should allow for testing most integrations.
+
+Bear in mind, it will take a couple of minutes during the first run to setup everything. In general, once the polymesh-rest-api-init container exits, you should be good to go.
 
 ## Statefullnes
 
@@ -37,19 +39,26 @@ Thanks to that, the whole environment will store its state during restarts.
 ```sh
 $ docker volume ls
 DRIVER    VOLUME NAME
-local     docker_pp-chain-data
-local     docker_pp-psql-data
-local     docker_pp-vault-init-volume
-local     docker_pp-vault-log-volume
-local     docker_pp-vault-root-token
-local     docker_pp-vault-volume
+local     polymesh-private_pp-chain-data
+local     polymesh-private_pp-psql-data
+local     polymesh-private_pp-rest-api-signer-init
+local     polymesh-private_pp-vault-log-volume
+local     polymesh-private_pp-vault-root-token
+local     polymesh-private_pp-vault-volume
 ```
 
 In case you want to start from scratch, you need to stop the containers and remove these volumes.
 
 ```sh
-docker compose down
-docker volume ls --filter label=network.polymesh.project=polymesh-private --quiet | xargs --max-args=1 --no-run-if-empty docker volume rm --force
+docker compose down --volumes
 ```
 
 ## Additional Notes
+
+To access Vault UI at http://localhost:8200 you need the root token. You can get it with this command:
+
+```sh
+docker compose logs vault-init 
+```
+
+It should be printed in the last line.
