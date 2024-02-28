@@ -8,9 +8,9 @@ The docker daemon needs to be running before compose will work. (Try `docker ps`
 
 ## Running
 
-Copy the correct env over to a `.env` from `envs/`, you may need to overwrite the existing symlink. This file specifies the images that will be used. Alternatively a file patch can be given explicitly to docker compose, e.g. `docker compose --env-file=envs/1.0 up`. A default .env file is present.
-
 Use `docker compose up -d` to bring up the services. `docker compose down` will stop them.
+
+The default .env file is present as a symlink. If you want to use different versions, overwrite it or link to any other existing env files in the ./envs directory. Alternatively a file patch can be given explicitly to docker compose, e.g. `docker compose --env-file=envs/1.0 up`.
 
 This will bring up:
 
@@ -69,9 +69,15 @@ docker compose logs vault-init
 
 It should be printed in the last line.
 
-List of web interfaces exposed to localhost with default ports:
+## List of web interfaces exposed to localhost with their default ports:
 
 http://localhost:3000 <-- Subquery GraphQL
 http://localhost:3001 <-- Polymesh Rest API
 http://localhost:8080/swagger-ui/ <-- Polymesh Proof API
 http://localhost:8020 <-- Hashicorp Vault, signing manager
+
+## List of remaining services exposed to localhost with their default ports:
+
+- localhost:9944 <-- polymesh-private WebSocket endpoint
+- localhost:9933 <-- polymesh-private HTTP endpoint
+- localhost:30333 <-- polymesh-private p2p endpoint
