@@ -4,6 +4,12 @@ A Docker Compose file and some auxiliary scripts are provided for running a [Pol
 
 Docker 19.03.0+ for you platform installed and running. Download and setup instructions can be found here: <https://docs.docker.com/get-docker/>
 
+Docker compose in version 1.10.0+. You can check your current version with command:
+
+```sh
+$ docker compose version
+```
+
 The Docker daemon needs to be running before Compose will work. (Try `docker ps` to see if the daemon responds)
 
 ## Running
