@@ -213,14 +213,10 @@ services:
 configs:
   psql_extensions:
     external: false
-    content: |
-      CREATE EXTENSION IF NOT EXISTS btree_gist;
+    file: ./scripts/psql_extensions.sql
   polymesh-healthcheck-libp2p:
     external: false
-    content: |
-      #!/bin/bash
-      set -exu -o pipefail
-      timeout 1 bash -c 'cat < /dev/null > /dev/tcp/127.0.0.1/30333' || exit 2
+    file: ./scripts/polymesh-healthcheck-libp2p.sh
   vault-config:
     external: false
     file: ./scripts/vault-config.json
