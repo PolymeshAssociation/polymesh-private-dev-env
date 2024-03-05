@@ -42,6 +42,7 @@ check_transit_engine() {
         vault write transit/keys/sender type=ed25519
         vault write transit/keys/receiver type=ed25519
         vault write transit/keys/mediator type=ed25519
+        vault write transit/keys/venue-owner type=ed25519
     else
         echo "Transit engine already enabled"
     fi

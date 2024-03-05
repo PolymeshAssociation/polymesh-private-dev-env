@@ -65,13 +65,15 @@ fi
 echo "Getting the admin user"
 ppadmin_address=$(get_address ppadmin-1)
 echo "Admin user address: $ppadmin_address"
-echo "Getting the sender, receiver and mediator users addresses"
+echo "Getting the sender, receiver, mediator and venue-owner users addresses"
 sender_address=$(get_address sender-1)
 echo "Sender user address: $sender_address"
 receiver_address=$(get_address receiver-1)
 echo "Receiver user address: $receiver_address"
 mediator_address=$(get_address mediator-1)
 echo "Mediator user address: $mediator_address"
+venue_owner_address=$(get_address venue-owner-1)
+echo "Venue owner user address: $venue_owner_address"
 
 ###############################################################
 # Make the admin user a CDD Provider
@@ -104,6 +106,7 @@ echo "Admin user DiD: $response"
 create_identity "$sender_address" "Sender"
 create_identity "$receiver_address" "Receiver"
 create_identity "$mediator_address" "Mediator"
+create_identity "$venue_owner_address" "Venue Owner"
 
 ###############################################################
 # Create a file to mark the setup has been completed
