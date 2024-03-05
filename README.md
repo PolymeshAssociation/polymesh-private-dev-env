@@ -37,6 +37,7 @@ The following signers, with keys stored in Vault, are created and can be used to
 - sender-1
 - receiver-1
 - mediator-1
+- venue-owner-1
 
 ## Statefulness
 
