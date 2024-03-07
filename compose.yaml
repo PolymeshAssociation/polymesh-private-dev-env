@@ -4,7 +4,7 @@ networks:
   polymesh-private:
 
 services:
-  sq-postgres:
+  subquery-postgres:
     image: postgres:16.1-alpine
     networks:
       - polymesh-private
@@ -25,10 +25,10 @@ services:
         target: /docker-entrypoint-initdb.d/btree_extension.sql
         mode: 0555
 
-  sq-node:
+  subquery-node:
     image: ${PP_SUBQUERY_IMAGE}
     depends_on:
-      sq-postgres:
+      subquery-postgres:
         condition: service_healthy
       polymesh-private:
         condition: service_healthy
@@ -39,7 +39,7 @@ services:
       DB_USER: postgres
       DB_PASS: postgres
       DB_DATABASE: postgres
-      DB_HOST: sq-postgres
+      DB_HOST: subquery-postgres
       DB_PORT: 5432
       START_BLOCK: 1
       NETWORK_ENDPOINT: "ws://polymesh-private:9944"
@@ -47,18 +47,18 @@ services:
     command:
       - -f=/app
     healthcheck:
-      test: ["CMD", "curl", "--fail", "http://sq-node:3000/ready"]
+      test: ["CMD", "curl", "--fail", "http://subquery-node:3000/ready"]
       interval: 20s
       timeout: 5s
       retries: 20
       start_period: 80s
   
-  sq-graphql:
+  subquery-graphql:
     image: ${PP_SUBQUERY_GRAPHQL_IMAGE}
     depends_on:
-      sq-node:
+      subquery-node:
         condition: service_healthy
-      sq-postgres:
+      subquery-postgres:
         condition: service_healthy
     networks:
       - polymesh-private
@@ -67,17 +67,17 @@ services:
     restart: on-failure
     environment:
       DB_DATABASE: postgres
-      DB_HOST: sq-postgres
+      DB_HOST: subquery-postgres
       DB_PORT: 5432
       DB_USER: postgres
       DB_PASS: postgres
       PORT: 3000
-      SUBQL_QUERY_INDEXER: http://sq-node:3000
+      SUBQL_QUERY_INDEXER: http://subquery-node:3000
       SUBQL_QUERY_NAME: public
       SUBQL_QUERY_OUTPUT_FMT: json
       SUBQL_QUERY_PLAYGROUND: true
     healthcheck:
-      test: ["CMD", "curl", "--fail", "sq-graphql:3000/.well-known/apollo/server-health"]
+      test: ["CMD", "curl", "--fail", "subquery-graphql:3000/.well-known/apollo/server-health"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -109,12 +109,12 @@ services:
       retries: 10
       start_period: 60s
 
-  polymesh-rest-api:
+  polymesh-private-rest-api:
     image: ${PP_REST_API_IMAGE}
     depends_on:
       polymesh-private:
         condition: service_healthy
-      sq-graphql:
+      subquery-graphql:
         condition: service_healthy
       vault-init:
         condition: service_completed_successfully
@@ -125,38 +125,39 @@ services:
     restart: on-failure
     volumes:
       - pp-vault-root-token:/vault-token:ro
-    entrypoint: /bin/sh -c "VAULT_TOKEN=$(cat /vault-token/token) node dist/main.js"
+    entrypoint: /bin/sh -c "VAULT_TOKEN=$(cat /vault-token/.token) node dist/main.js"
     environment:
       PORT: 3000
       POLYMESH_NODE_URL: "ws://polymesh-private:9944"
-      POLYMESH_MIDDLEWARE_V2_URL: "http://sq-graphql:3000"
+      POLYMESH_MIDDLEWARE_V2_URL: "http://subquery-graphql:3000"
       AUTH_STRATEGY: "open"
       DEVELOPER_UTILS: true
       VAULT_URL: "http://vault:8200/v1/transit"
+      PROOF_SERVER_URL: "http://polymesh-private-proof-api:8080/api/v1"
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://polymesh-rest-api:3000/network/latest-block"]
+      test: ["CMD", "wget", "--spider", "-q", "http://polymesh-private-rest-api:3000/network/latest-block"]
       interval: 30s
       timeout: 5s
       retries: 10
       start_period: 30s
 
-  polymesh-rest-api-init:
+  polymesh-private-rest-api-init:
     image: alpine:3.19
     depends_on:
-      polymesh-rest-api:
+      polymesh-private-rest-api:
         condition: service_healthy
-    entrypoint: /opt/polymesh-rest-api/init.sh
+    entrypoint: /opt/polymesh-private-rest-api/init.sh
     networks:
       - polymesh-private
     volumes:
-      - pp-rest-api-signer-init:/opt/polymesh-rest-api/status
+      - pp-rest-api-accounts-init:/opt/polymesh-private-rest-api/status
     configs:
-      - source: rest-api-signer-init
-        target: /opt/polymesh-rest-api/init.sh
+      - source: rest-api-accounts-init
+        target: /opt/polymesh-private-rest-api/init.sh
         mode: 0555
     
 
-  polymesh-proof-api:
+  polymesh-private-proof-api:
     image: ${PP_PROOF_API_IMAGE}
     networks:
       - polymesh-private
@@ -226,9 +227,9 @@ configs:
   vault-init-dependencies:
     external: false
     file: ./scripts/vault-init-dependencies.sh
-  rest-api-signer-init:
+  rest-api-accounts-init:
     external: false
-    file: ./scripts/rest-api-signer-init.sh
+    file: ./scripts/rest-api-accounts-init.sh
 
 volumes:
   pp-psql-data:
@@ -251,7 +252,7 @@ volumes:
     labels:
       - "network.polymesh.project=polymesh-private"
       - "network.polymesh.description=Hashicorp Vault root token"
-  pp-rest-api-signer-init: 
+  pp-rest-api-accounts-init: 
     labels:
       - "network.polymesh.project=polymesh-private"
       - "network.polymesh.description=REST API signer init"

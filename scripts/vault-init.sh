@@ -18,20 +18,20 @@ initialize_vault() {
                   -key-threshold 1 \
                   -format=json)
     echo "Saving Vault unseal and root keys to files"
-    echo "$(echo "$INIT" | jq -r .unseal_keys_b64[0])" > /opt/vault/.unseal_key
-    echo "$(echo "$INIT" | jq -r .root_token)" > /vault-token/token
+    echo "$(echo "$INIT" | jq -r .unseal_keys_b64[0])" > /vault-token/.unseal_key
+    echo "$(echo "$INIT" | jq -r .root_token)" > /vault-token/.token
 }
 
 unseal_vault() {
     local key
-    key=$(cat /opt/vault/.unseal_key)
+    key=$(cat /vault-token/.unseal_key)
     vault operator unseal $key
 
     check_transit_engine
 }
 
 check_transit_engine() {
-    export VAULT_TOKEN=$(cat /vault-token/token)
+    export VAULT_TOKEN=$(cat /vault-token/.token)
 
     if echo $(vault secrets list -format=json) | jq -e 'paths | join("/") | test("transit/") | not' > /dev/null; then
         vault secrets enable -path=transit transit
@@ -83,7 +83,7 @@ while [[ $(($SECONDS - $SECONDS_DELTA)) -lt "$TIMEOUT_SECONDS" ]]; do
 done
 
 # Output Vault Root Token
-echo "Vault Root Token: $(cat /vault-token/token)"
+echo "Vault Root Token: $(cat /vault-token/.token)"
 
 if [ "$READY" = false ]; then
     >&2 echo "Timed out waiting for Vault to become ready"

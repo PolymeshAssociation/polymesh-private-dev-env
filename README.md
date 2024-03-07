@@ -21,8 +21,8 @@ The default .env file is provided as a symlink. If you want to use different ver
 This command will bring up:
 
 - Single node Polymesh Private chain in a dev mode
-- Polymesh REST API
-- Polymesh Proof API
+- Polymesh Private REST API
+- Polymesh Private Proof API
 - Hashicorp Vault as a signing manager for the Polymesh Rest API
 - Subquery indexer
 - Subquery graphql server
@@ -30,7 +30,7 @@ This command will bring up:
 
 This set of services should allow for testing most integrations.
 
-Bear in mind that it will take a couple of minutes during the first run to set up everything. Once the polymesh-rest-api-init container exits (it will print a message that the setup is completed), you should be good to go.
+Bear in mind that it will take a couple of minutes during the first run to set up everything. Once the polymesh-private-rest-api-init container exits (it will print a message that the setup is completed), you should be good to go.
 
 The following signers, with keys stored in Vault, are created and can be used to sign transactions. They will have proper CDD claim and some POLYX.
 
@@ -54,7 +54,7 @@ $ docker volume ls
 DRIVER    VOLUME NAME
 local     polymesh-private_pp-chain-data
 local     polymesh-private_pp-psql-data
-local     polymesh-private_pp-rest-api-signer-init
+local     polymesh-private_pp-rest-api-accounts-init
 local     polymesh-private_pp-vault-log-volume
 local     polymesh-private_pp-vault-root-token
 local     polymesh-private_pp-vault-volume

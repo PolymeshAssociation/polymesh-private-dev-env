@@ -3,7 +3,7 @@
 set -eu -o pipefail
 export DEBIAN_FRONTEND=noninteractive
 
-export API_URL=http://polymesh-rest-api:3000
+export API_URL=http://polymesh-private-rest-api:3000
 
 # Install prerequisites
 apk add --no-cache \
@@ -55,7 +55,7 @@ create_identity() {
 
 
 # check if setup has already been completed
-if [ -f /opt/polymesh-rest-api/status/.setup-complete ]; then
+if [ -f /opt/polymesh-private-rest-api/status/.setup-complete ]; then
   echo "Setup has already been completed"
   exit 0
 fi
@@ -88,7 +88,7 @@ response=$(curl -s -X "POST" \
   \"accounts\": [
     {
       \"address\": \"$ppadmin_address\",
-      \"initialPolyx\": 100000
+      \"initialPolyx\": 10000000
     }
   ]
 }" | jq -r .results[0].did )
@@ -110,6 +110,6 @@ create_identity "$venue_owner_address" "Venue Owner"
 
 ###############################################################
 # Create a file to mark the setup has been completed
-touch /opt/polymesh-rest-api/status/.setup-complete
+touch /opt/polymesh-private-rest-api/status/.setup-complete
 
 echo "Setup has been completed"
