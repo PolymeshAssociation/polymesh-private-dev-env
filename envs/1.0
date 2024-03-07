@@ -5,15 +5,15 @@ PP_CHAIN_WS_PORT=9944
 PP_CHAIN_RPC_PORT=9933
 PP_CHAIN_P2P_PORT=30333
 
-PP_REST_API_IMAGE=polymeshassociation/polymesh-rest-api:v5.0.0-alpha.ca.1
+PP_REST_API_IMAGE=polymeshassociation/polymesh-private-rest-api:v1.0.0-alpha.1
 PP_REST_API_PORT=3001
 
-PP_SUBQUERY_IMAGE=polymeshassociation/polymesh-subquery:v12.3.0
+PP_SUBQUERY_IMAGE=polymeshassociation/polymesh-subquery:v12.4.0
 
 PP_SUBQUERY_GRAPHQL_IMAGE=onfinality/subql-query:v2.9.0
 PP_SUBQUERY_GRAPHQL_PORT=3000
 
-PP_PROOF_API_IMAGE=polymeshassociation/polymesh-proof-api:8b041543cb-main-debian
+PP_PROOF_API_IMAGE=polymeshassociation/polymesh-private-proof-api:1.0.0-main-debian
 PP_PROOF_API_PORT=8080
 
 VAULT_VERSION=1.15.5
