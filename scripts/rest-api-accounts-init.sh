@@ -50,13 +50,24 @@ create_identity() {
   fi
 
   echo "$user_role DiD: $response"
+  echo "$response" > /opt/polymesh-private-rest-api/status/$user_role"_did"
 }
 
 
 
 # check if setup has already been completed
 if [ -f /opt/polymesh-private-rest-api/status/.setup-complete ]; then
+
+  for file in /opt/polymesh-private-rest-api/status/*_address; do
+    echo "$(basename $file): $(cat $file)"
+  done
+
+  for file in /opt/polymesh-private-rest-api/status/*_did; do
+    echo "$(basename $file): $(cat $file)"
+  done
+
   echo "Setup has already been completed"
+
   exit 0
 fi
 
@@ -64,15 +75,20 @@ fi
 # Get the addresses of the admin and sender, receiver and mediator users
 echo "Getting the admin user"
 ppadmin_address=$(get_address ppadmin-1)
+echo $ppadmin_address > /opt/polymesh-private-rest-api/status/ppadmin_address
 echo "Admin user address: $ppadmin_address"
 echo "Getting the sender, receiver, mediator and venue-owner users addresses"
 sender_address=$(get_address sender-1)
+echo $sender_address > /opt/polymesh-private-rest-api/status/sender_address
 echo "Sender user address: $sender_address"
 receiver_address=$(get_address receiver-1)
+echo $receiver_address > /opt/polymesh-private-rest-api/status/receiver_address
 echo "Receiver user address: $receiver_address"
 mediator_address=$(get_address mediator-1)
+echo $mediator_address > /opt/polymesh-private-rest-api/status/mediator_address
 echo "Mediator user address: $mediator_address"
 venue_owner_address=$(get_address venue-owner-1)
+echo $venue_owner_address > /opt/polymesh-private-rest-api/status/venue_owner_address
 echo "Venue owner user address: $venue_owner_address"
 
 ###############################################################
@@ -106,7 +122,7 @@ echo "Admin user DiD: $response"
 create_identity "$sender_address" "Sender"
 create_identity "$receiver_address" "Receiver"
 create_identity "$mediator_address" "Mediator"
-create_identity "$venue_owner_address" "Venue Owner"
+create_identity "$venue_owner_address" "Venue_Owner"
 
 ###############################################################
 # Create a file to mark the setup has been completed

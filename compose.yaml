@@ -163,6 +163,8 @@ services:
       - polymesh-private
     ports:
       - ${PP_PROOF_API_PORT:-8080}:8080
+    volumes:
+      - pp-proof-api-data:/data
     restart: always
     environment:
       DATABASE_URL: sqlite:/data/confidential_assets.db
@@ -256,3 +258,7 @@ volumes:
     labels:
       - "network.polymesh.project=polymesh-private"
       - "network.polymesh.description=REST API signer init"
+  pp-proof-api-data:
+    labels:
+      - "network.polymesh.project=polymesh-private"
+      - "network.polymesh.description=Proof API data"
