@@ -5,10 +5,10 @@ PP_CHAIN_WS_PORT=9944
 PP_CHAIN_RPC_PORT=9933
 PP_CHAIN_P2P_PORT=30333
 
-PP_REST_API_IMAGE=polymeshassociation/polymesh-private-rest-api:v1.0.0-alpha.1
+PP_REST_API_IMAGE=polymeshassociation/polymesh-private-rest-api:v1.0.0-alpha.3
 PP_REST_API_PORT=3001
 
-PP_SUBQUERY_IMAGE=ghcr.io/polymeshassociation/polymesh-subquery:v12.4.0-alpha.ca.1
+PP_SUBQUERY_IMAGE=polymeshassociation/polymesh-subquery:v13.0.0
 
 PP_SUBQUERY_GRAPHQL_IMAGE=onfinality/subql-query:v2.9.0
 PP_SUBQUERY_GRAPHQL_PORT=3000
