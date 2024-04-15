@@ -13,7 +13,7 @@ PP_SUBQUERY_IMAGE=polymeshassociation/polymesh-subquery:v13.0.0
 PP_SUBQUERY_GRAPHQL_IMAGE=onfinality/subql-query:v2.9.0
 PP_SUBQUERY_GRAPHQL_PORT=3000
 
-PP_PROOF_API_IMAGE=polymeshassociation/polymesh-private-proof-api:1.0.0-main-debian
+PP_PROOF_API_IMAGE=polymeshassociation/polymesh-private-proof-api:1.0.1
 PP_PROOF_API_PORT=8080
 
 VAULT_VERSION=1.15.5
