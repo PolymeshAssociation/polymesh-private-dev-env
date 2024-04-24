@@ -22,7 +22,7 @@ cd polymesh-private-dev-env
 
 You can now use `docker compose up -d` to bring up the services. `docker compose down` will stop them.
 
-The default .env file is provided as a symlink. If you want to use different versions, overwrite it or link to any other existing env files in the ./envs directory. Alternatively a file patch can be given explicitly to docker compose, e.g. `docker compose --env-file=envs/1.0 up`.
+The default .env file is provided as a symlink. If you want to use different versions, overwrite it or link to any other existing env files in the ./envs directory. Alternatively a file patch can be given explicitly to docker compose, e.g. `docker compose --env-file=envs/1.0 up -d`.
 
 This command will bring up:
 
@@ -36,7 +36,9 @@ This command will bring up:
 
 This set of services should allow for testing most integrations.
 
-Bear in mind that it will take a couple of minutes during the first run to set up everything. Once the polymesh-private-rest-api-init container exits (it will print a message that the setup is completed), you should be good to go.
+Bear in mind that it will take a couple of minutes during the first run to set up everything.
+
+Go to http://localhost:3030/status/pp to monitor if everything has fully initialized. Once everything is green and the top message says _All Systems Operational_ you should be good to go.
 
 The following signers, with keys stored in Vault, are created and can be used to sign transactions. They will have proper CDD claim and some POLYX.
 
@@ -61,6 +63,7 @@ DRIVER    VOLUME NAME
 local     polymesh-private_pp-chain-data
 local     polymesh-private_pp-psql-data
 local     polymesh-private_pp-rest-api-accounts-init
+local     polymesh-private_pp-uptime-kuma-data
 local     polymesh-private_pp-vault-log-volume
 local     polymesh-private_pp-vault-root-token
 local     polymesh-private_pp-vault-volume

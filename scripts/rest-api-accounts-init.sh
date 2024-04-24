@@ -9,6 +9,14 @@ export API_URL=http://polymesh-private-rest-api:3000
 apk add --no-cache \
     curl \
     jq \
+    postgresql16-client
+
+# Function to set status in psql db
+set_status() {
+  psql -c "INSERT INTO status (service_name, service_available) VALUES ('rest-api-init', $1) ON CONFLICT (service_name) DO UPDATE SET service_available = EXCLUDED.service_available" > /dev/null
+}
+
+set_status "false"
 
 # Function to get address
 get_address() {
@@ -65,6 +73,8 @@ if [ -f /opt/polymesh-private-rest-api/status/.setup-complete ]; then
   for file in /opt/polymesh-private-rest-api/status/*_did; do
     echo "$(basename $file): $(cat $file)"
   done
+
+  set_status "true"
 
   echo "Setup has already been completed"
 
@@ -127,5 +137,7 @@ create_identity "$venue_owner_address" "Venue_Owner"
 ###############################################################
 # Create a file to mark the setup has been completed
 touch /opt/polymesh-private-rest-api/status/.setup-complete
+
+set_status "true"
 
 echo "Setup has been completed"
