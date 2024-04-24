@@ -1,10 +1,22 @@
-version: '3.8'
-
 networks:
   polymesh-private:
 
 services:
-  subquery-postgres:
+
+  uptime-kuma:
+    build:
+      context: images/uptime-kuma
+      args:
+        - IMAGE_NAME=${PP_UPTIME_KUMA_IMAGE}
+    networks:
+      - polymesh-private
+    volumes:
+      - pp-uptime-kuma-data:/app/data
+    ports:
+      - ${PP_UPTIME_KUMA_PORT:-3030}:3001
+    restart: always
+
+  pp-postgres:
     image: postgres:16.1-alpine
     networks:
       - polymesh-private
@@ -28,7 +40,7 @@ services:
   subquery-node:
     image: ${PP_SUBQUERY_IMAGE}
     depends_on:
-      subquery-postgres:
+      pp-postgres:
         condition: service_healthy
       polymesh-private:
         condition: service_healthy
@@ -39,7 +51,7 @@ services:
       DB_USER: postgres
       DB_PASS: postgres
       DB_DATABASE: postgres
-      DB_HOST: subquery-postgres
+      DB_HOST: pp-postgres
       DB_PORT: 5432
       START_BLOCK: 1
       NETWORK_ENDPOINT: "ws://polymesh-private:9944"
@@ -58,7 +70,7 @@ services:
     depends_on:
       subquery-node:
         condition: service_healthy
-      subquery-postgres:
+      pp-postgres:
         condition: service_healthy
     networks:
       - polymesh-private
@@ -67,7 +79,7 @@ services:
     restart: on-failure
     environment:
       DB_DATABASE: postgres
-      DB_HOST: subquery-postgres
+      DB_HOST: pp-postgres
       DB_PORT: 5432
       DB_USER: postgres
       DB_PASS: postgres
@@ -149,6 +161,11 @@ services:
     entrypoint: /opt/polymesh-private-rest-api/init.sh
     networks:
       - polymesh-private
+    environment:
+      PGPASSWORD: postgres
+      PGUSER: postgres
+      PGDATABASE: services_status
+      PGHOST: pp-postgres
     volumes:
       - pp-rest-api-accounts-init:/opt/polymesh-private-rest-api/status
     configs:
@@ -204,6 +221,10 @@ services:
       - /vault/logs
     environment:
       VAULT_ADDR: "http://vault:8200"
+      PGPASSWORD: postgres
+      PGUSER: postgres
+      PGDATABASE: services_status
+      PGHOST: pp-postgres
     configs:
       - source: vault-init
         target: /opt/vault/init.sh
@@ -234,6 +255,10 @@ configs:
     file: ./scripts/rest-api-accounts-init.sh
 
 volumes:
+  pp-uptime-kuma-data:
+    labels:
+      - "network.polymesh.project=polymesh-private"
+      - "network.polymesh.description=Uptime Kuma data"
   pp-psql-data:
     labels:
       - "network.polymesh.project=polymesh-private"

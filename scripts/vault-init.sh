@@ -11,6 +11,13 @@ export VAULT_ADDR=http://vault:8200
 
 ###############################################################
 
+# Function to set status in psql db
+set_status() {
+  psql -c "INSERT INTO status (service_name, service_available) VALUES ('vault', $1) ON CONFLICT (service_name) DO UPDATE SET service_available = EXCLUDED.service_available" > /dev/null
+}
+
+set_status "false"
+
 initialize_vault() {
     echo "Initializing Vault"
     INIT=$(vault operator init \
@@ -85,8 +92,11 @@ done
 # Output Vault Root Token
 echo "Vault Root Token: $(cat /vault-token/.token)"
 
+set_status "true"
+
 if [ "$READY" = false ]; then
     >&2 echo "Timed out waiting for Vault to become ready"
+    set_status "false"
     exit 1
 fi
 
