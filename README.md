@@ -20,9 +20,9 @@ git clone https://github.com/PolymeshAssociation/polymesh-private-dev-env.git
 cd polymesh-private-dev-env
 ```
 
-You can now use `docker compose up --build -d` to bring up the services. `docker compose down` will stop them.
+You can now use `docker compose up -d` to bring up the services. `docker compose down` will stop them.
 
-The default .env file is provided as a symlink. If you want to use different versions, overwrite it or link to any other existing env files in the ./envs directory. Alternatively a file patch can be given explicitly to docker compose, e.g. `docker compose --env-file=envs/1.0 up --build -d`.
+The default .env file is provided as a symlink. If you want to use different versions, overwrite it or link to any other existing env files in the ./envs directory. Alternatively a file patch can be given explicitly to docker compose, e.g. `docker compose --env-file=envs/1.0 up -d`.
 
 This command will bring up:
 
