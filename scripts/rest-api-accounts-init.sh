@@ -57,7 +57,7 @@ create_identity() {
     exit 1
   fi
 
-  echo "$user_role DiD: $response"
+  echo "${user_role}_did: $response"
   echo "$response" > /opt/polymesh-private-rest-api/status/$user_role"_did"
 }
 
