@@ -107,6 +107,7 @@ services:
       - pp-chain-data:/var/lib/polymesh-private
     command:
       - --dev
+      - --pruning=archive
       - --rpc-external
       - --ws-external
       - --base-path=/var/lib/polymesh-private
